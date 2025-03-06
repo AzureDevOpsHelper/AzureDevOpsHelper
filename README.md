@@ -22,7 +22,12 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
 
 ## Getting Started
 
-1. TBD
+1. Download this entire Repo somewhere in your file system.
+2. Leave the folder structure intact or this will not work.
+3. Run the `AzureDevOpsHelper.ps1` file in your favorite Powershell tool.
+4. When prompted enter the name of your devops org and press enter.
+5. Follow the log in flow to Get a Token for your user.
+6. The script will output information about your user.
 
 ## Contributing 
 1. TBD
