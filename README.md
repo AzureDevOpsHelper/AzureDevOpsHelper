@@ -4,9 +4,7 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
 
 ## Features
 
-- Authenticate with Azure DevOps using MSAL (Microsoft Authentication Library) and fallback to ADAL (Active Directory Authentication Library) if necessary.
-- Authentication will fall back to a PAT but my current feeling is if you can't auth either of the above you likely can't get a PAT either.
-
+- Authenticate with Azure DevOps using MSAL (Microsoft Authentication Library).
 - Retrieve the current user's information from Azure DevOps.
  > - Auth to GraphAPI and gather user info from Entra (if applicable).  
 - Retrieve the projects in the Azure DevOps organization.
