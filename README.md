@@ -8,12 +8,13 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
 - Authentication will fall back to a PAT but my current feeling is if you can't auth either of the above you likely can't get a PAT either.
 
 - Retrieve the current user's information from Azure DevOps.
- > - todo: Auth to GraphAPI and gather user info from Entra (if applicable).  
+ > - Auth to GraphAPI and gather user info from Entra (if applicable).  
 - Retrieve the projects in the Azure DevOps organization.
-- Retrieve the groups the current user is a member of.
+- todo: Retrieve the groups the current user is a member of.
  > - todo: Retrieve group memberships from Entra.
  > - todo: Determine how to handle nesting for both group types
-- Retrieve and display security namespaces and access control entries (ACEs) for the current user.
+- todo: Retrieve and display security namespaces and access control entries (ACEs) for the current user.
+- todo: Retrieve entitlement info 
 
 ## Prerequisites
 
@@ -26,8 +27,9 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
 2. Leave the folder structure intact or this will not work.
 3. Run the `AzureDevOpsHelper.ps1` file in your favorite Powershell tool.
 4. When prompted enter the name of your devops org and press enter.
-5. Follow the log in flow to Get a Token for your user.
-6. The script will output information about your user.
+5. Follow the log in flow to get a Token for your Azure DevOps.
+6. log in a second time, to authenticate to GraphAPI
+7. The script will output information about your user from devops and Entra.
 
 ## Contributing 
 1. TBD

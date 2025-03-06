@@ -1,6 +1,6 @@
 {
     "scope":  "499b84ac-1321-427f-aa17-267ca6975798/.default",
-    "graphScope":  "User.Read",
+    "graphScope":  "https://graph.microsoft.com/.default",
     "clientId": "872cd9fa-d31f-45e0-9eab-6e460a02d1f1",
     "redirectUri": "http://localhost",
     "devOpsBaseURL": "https://dev.azure.com/"

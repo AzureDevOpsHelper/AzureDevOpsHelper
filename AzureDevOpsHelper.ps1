@@ -1,5 +1,4 @@
 Clear-Host
-#Write-Host "joining the functions"
 # Load the functions
 $ScriptDirectory = Split-Path $MyInvocation.MyCommand.Path
 foreach ($file in Get-ChildItem -Path $ScriptDirectory\Functions\*.ps1) {
@@ -9,7 +8,6 @@ foreach ($file in Get-ChildItem -Path $ScriptDirectory\Troubleshooters\*.ps1) {
     . $file.FullName
 }
 
-#Write-Host "loading the config file"
 # Load info from config file
 $config = Get-Content -Path ".\config.json" | ConvertFrom-Json
 $devOpsbaseURL = $config.devOpsBaseURL
@@ -24,7 +22,6 @@ $azureDevOpsOrganizationUrl = $devOpsBaseURL + $orgName
 $token = Get-MSALToken
 $token = $token[-1] 
 $Authheader = $Token.CreateAuthorizationHeader()
-
 $projectsurl = $azureDevOpsOrganizationUrl + "/_apis/projects?stateFilter=All&api-version=2.2"
 $Result =  GET-AzureDevOpsRestAPI -RestAPIUrl $projectsurl -Authheader $Authheader
 
@@ -47,15 +44,21 @@ if ($VSID -eq "")
     exit
 }
 else {
+    # Call Microsoft Graph API to get tenant-level info about a user this currently requires a second sign in.
+    # This is because the token we have is for Azure DevOps and not for Microsoft Graph.
+    # I'm looking into trying to cache the refresh token to see if we can get a token for Microsoft Graph without signing in again.
     $User = Get-UserInfo -Authheader $Authheader -orgUrl $azureDevOpsOrganizationUrl -VSID $VSID
     Write-Host "User Info (from org)"
     $User.results | Format-List
-
-    # Call Microsoft Graph API to get tenant-level info about a user Not Yet functional.
-    #$graphResponse = Get-MSALTokenforGraphApi -tenantId $config.tenantId -OID $User.results.id
-    #Write-Host "User Info (from Microsoft Graph)"
-    #$graphResponse | Format-List
-
+    $graphtoken = Get-MSALTokenforGraphApi
+    $graphtoken = $graphtoken[-1]
+    $graphAuthheader = $graphtoken.CreateAuthorizationHeader()
+    Write-Host "User Info (from Microsoft Graph)"
+    $Graphapiurl = "https://graph.microsoft.com/v1.0/users/$($User.results.originId)?`$select=userPrincipalName,displayName,ID,creationType,externalUserState,identities"
+    $Result =  GET-AzureDevOpsRestAPI -RestAPIUrl $Graphapiurl -Authheader $graphAuthheader
+    $Result.results | Format-List
+    Write-Host "how can this user log in:"
+    $Result.results.identities | Format-List
 }
 
 
