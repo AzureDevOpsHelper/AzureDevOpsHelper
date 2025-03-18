@@ -49,16 +49,22 @@ else {
     # I'm looking into trying to cache the refresh token to see if we can get a token for Microsoft Graph without signing in again.
     $User = Get-UserInfo -Authheader $Authheader -orgUrl $azureDevOpsOrganizationUrl -VSID $VSID
     Write-Host "User Info (from org)"
-    $User.results | Format-List
+    $User.results | Format-List -Property subjectKind,metaType,directoryAlias,domain,principalName,mailAddress,origin,originId,displayName,descriptor
     $graphtoken = Get-MSALTokenforGraphApi
     $graphtoken = $graphtoken[-1]
     $graphAuthheader = $graphtoken.CreateAuthorizationHeader()
     Write-Host "User Info (from Microsoft Graph)"
-    $Graphapiurl = "https://graph.microsoft.com/v1.0/users/$($User.results.originId)?`$select=userPrincipalName,displayName,ID,creationType,externalUserState,identities"
-    $Result =  GET-AzureDevOpsRestAPI -RestAPIUrl $Graphapiurl -Authheader $graphAuthheader
-    $Result.results | Format-List
-    Write-Host "how can this user log in:"
-    $Result.results.identities | Format-List
+    
+    $Result =  Get-GraphInfo -Authheader $graphAuthheader -oid $User.results.originId -tid $User.results.domain
+    $Result.user | Format-List -Property id,userPrincipalName,displayName,creationType,externalUserState
+    Write-Host "Allowed user log ins:"
+    $Result.user.identities | Format-List
+    
+    Write-Host "Tenant Info (from Microsoft Graph)"
+    $Result.tenant | Format-List -Property Id,displayName,onPremisesSyncEnabled 
 }
-
-
+# Lets Gather Information about the Users Group Memberships in Azure DevOps
+Write-Host "Individually checking each Group Membership, this may take a while and make a lot of calls"
+$UserGroups = Get-GroupInfo -Authheader $Authheader -orgUrl $azureDevOpsOrganizationUrl -descriptor $User.results.descriptor
+Write-Host "User Group Memberships: $($UserGroups.Count)"
+$UserGroups | Format-Table -Property origin, principalName

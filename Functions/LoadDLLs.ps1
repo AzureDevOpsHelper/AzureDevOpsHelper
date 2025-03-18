@@ -39,9 +39,10 @@ function Import-MSALAssemblies
         else
         {
             Write-Host $_
-            Write-Host "Error loading Microsoft.IdentityModel.Abstractions.dll you can try to download it from https://www.nuget.org/packages/Microsoft.IdentityModel.Abstractions/2.26.0 and place it in the Libraries folder."
+            Write-Host "Error loading Microsoft.IdentityModel.Abstractions.dll you can try to download it and place it in the Libraries folder."
         }
     }
+    
     $WarningPreference = $WP
     $ProgressPreference = $PP
 }

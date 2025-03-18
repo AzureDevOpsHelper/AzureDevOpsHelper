@@ -5,7 +5,7 @@ function GET-AzureDevOpsRestAPI {
         [string]$RestAPIUrl
     )
     #Write-Host "Calling Azure DevOps Rest API"
-    $debug = $false
+    #$debug = $false
     $Headers = @{
         Authorization           = $Authheader
         "X-TFS-FedAuthRedirect" = "Suppress"
@@ -19,29 +19,35 @@ function GET-AzureDevOpsRestAPI {
         ResponseHeadersVariable = 'responseHeaders' #This is the parameter to pass the variable (no $) to retain the http headers from the response.
     }
     try
-    {
+    {   $WP = $WarningPreference
+        $WarningPreference = 'SilentlyContinue'
+        $PP = $ProgressPreference
+        $ProgressPreference = 'SilentlyContinue'
         $result = Invoke-RestMethod @params 
         $results = New-Object "System.Collections.Generic.Dictionary[[String],[PSCustomObject]]"
         $results.Add("results", $result)
         $results.Add("responseHeaders", $responseHeaders)
         $results.Add("statusCode", $statusCode)
-
+        $WarningPreference = $WP
+        $ProgressPreference = $PP
         return $results
     }
     Catch {
-        Write-Host "ERROR: " -ForegroundColor red
-        Write-Host "StatusCode:" $_.Exception.Response.StatusCode.value__ -ForegroundColor red
-        Write-Host "StatusDescription:" $_.Exception.Response.StatusDescription -ForegroundColor red
-        Write-Host "ErrorDescription:" $_ -ForegroundColor red
-        Write-Host "at line $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor red
-        throw ("Error in RestAPI Call")
+        
+        throw ("ERROR: `r`n" + 
+        "StatusCode: $($_.Exception.Response.StatusCode.value__) `r`n" +
+        "StatusDescription: $($_.Exception.Response.StatusDescription) `r`n" +
+        "ErrorDescription: $($_) `r`n" +
+        "at line $($_.InvocationInfo.ScriptLineNumber) `r`n`r`n" + 
+        "StatusCode: $statusCode`r`n" +
+        "Headers: + $responseHeaders`r`n" +
+        "Body: $Response`r`n")
     }
-    finally {
+<#    finally {
         #region Debug&Throttle
         if #in theory this should add the details if debug is turned on OR if there is a non 200 pass OR if there is throttling happening 
         (
                 ($Debug) `
-            -or (($statusCode -lt 200)                                -or  ($statusCode -ge 300)) `
             -or (($null -ne $responseHeaders."Retry-After")           -and ($responseHeaders."Retry-After"           -gt 0)) `
             -or (($null -ne $responseHeaders."X-RateLimit-Resource")  -and ($responseHeaders."X-RateLimit-Resource"  -ne "")) `
             -or (($null -ne $responseHeaders."X-RateLimit-Delay")     -and ($responseHeaders."X-RateLimit-Delay"     -gt 0)) `
@@ -58,4 +64,9 @@ function GET-AzureDevOpsRestAPI {
         }
         #endregion Debug&Throttle
     }
+    $results.Add("responseHeaders", $responseHeaders)
+    $results.Add("statusCode", $statusCode)
+
+    return $results
+}#>
 }

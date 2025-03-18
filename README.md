@@ -1,18 +1,19 @@
 # AzureDevOpsHelper
 
-AzureDevOpsUserHelper is a diagnostic and informational script that will focus on pulling User information from Azure Devops.  I intend to add the ability to perform diagnostic checking for specific known issues, though I'm not planning to add any "fix" capability to ensure that this remains a diagnostic tool and can be run without risk. 
+AzureDevOpsUserHelper is a diagnostic and informational script that will focus on pulling User information from Azure Devops and related systems.  I intend to add the ability to perform diagnostic checking for specific known issues, though I'm not planning to add any "fix" capability to ensure that this remains a diagnostic tool and can be run without risk. 
 
 ## Features
 
 - Authenticate with Azure DevOps using MSAL (Microsoft Authentication Library).
 - Retrieve the current user's information from Azure DevOps.
- > - Auth to GraphAPI and gather user info from Entra (if applicable).  
+ > - Auth to GraphAPI and gather user and tenant info from Entra (if applicable).  
 - Retrieve the projects in the Azure DevOps organization.
-- todo: Retrieve the groups the current user is a member of.
- > - todo: Retrieve group memberships from Entra.
- > - todo: Determine how to handle nesting for both group types
-- todo: Retrieve and display security namespaces and access control entries (ACEs) for the current user.
-- todo: Retrieve entitlement info 
+- Retrieve the groups the current user is a member of (both Entra and Azure DevOps).
+ > - __The api to pull "memberships" is not paginated so we can't reliably ask for all user memberships__
+ > - Pull all Groups in the Org in pages of 500, use continuation token to repeat until done
+ > - Check each user/container for membership (this also shows nested memberships!) 
+ - todo: Retrieve and display security namespaces and access control entries (ACEs) for the current user.
+ - todo: Retrieve entitlement info 
 
 ## Prerequisites
 
@@ -26,9 +27,11 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
 3. Run the `AzureDevOpsHelper.ps1` file in your favorite Powershell tool.
 4. When prompted enter the name of your devops org and press enter.
 5. Follow the log in flow to get a Token for your Azure DevOps.
-6. log in a second time, to authenticate to GraphAPI
+6. Log in a second time, to authenticate to GraphAPI.
 7. The script will output information about your user from devops and Entra.
 
 ## Contributing 
-1. TBD
+If you'd like to contribute please fork this Repo and make whatever changes you feel are needed, or add functionality.
+Submit a PR with a good description of the changes and @SamGrantham to review, I'll take a look and approve/comment ASAP!
+
 
