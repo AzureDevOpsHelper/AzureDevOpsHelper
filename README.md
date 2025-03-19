@@ -16,8 +16,7 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
  > - This uses ForEach-Object -Parallel with -ThrottleLimit 25 making this significantly faster.
  - todo: Retrieve and display security namespaces and access control entries (ACEs) for the current user [Add Permissions Information](https://github.com/AzureDevOpsHelper/AzureDevOpsHelper/issues/1). 
  - todo: Retrieve entitlement info [Retrieve Entitlement Details](https://github.com/AzureDevOpsHelper/AzureDevOpsHelper/issues/3).
- - todo: Cretae output file with verbose details [Output to a File with full details](https://github.com/AzureDevOpsHelper/AzureDevOpsHelper/issues/2)
-
+ - todo: Create output file with verbose details [Output to a File with full details](https://github.com/AzureDevOpsHelper/AzureDevOpsHelper/issues/2)
 ## Prerequisites
 
 - .Net Framework
