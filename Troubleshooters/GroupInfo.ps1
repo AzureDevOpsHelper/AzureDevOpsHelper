@@ -3,9 +3,13 @@ function Get-GroupInfo
     param (
         [string]$Authheader,
         [string]$orgUrl,
-        [string]$descriptor
+        [string]$descriptor,
+        [string]$ScriptDirectory
     )
-    $allGroups = @()
+    $Authheader | Out-File "c:\temp\authheader.txt" 
+    $azureDevOpsOrganizationUrl | Out-File "c:\temp\authheader.txt" -Append
+    $descriptor | Out-File "c:\temp\authheader.txt" -Append
+    $threadSafeallgroups = [System.Collections.Concurrent.ConcurrentQueue[pscustomobject]]::new()
     $orgUrl = $orgUrl.Replace("dev.azure.com", "vssps.dev.azure.com")
     $Result = $null
     Do
@@ -19,8 +23,16 @@ function Get-GroupInfo
             $groupInfourl = "$($orgUrl)/_apis/graph/groups?continuationToken=$($Result.responseHeaders."x-ms-continuationtoken")&api-version=7.1-preview.1"
         }
         $Result =  GET-AzureDevOpsRestAPI -RestAPIUrl $groupInfourl -Authheader $Authheader
-        foreach ($group in $Result.results.value)
-        {
+        $Result.results.value | ForEach-Object -Parallel {
+            $_ScriptDirectory = $using:ScriptDirectory
+            foreach ($file in Get-ChildItem -Path $_ScriptDirectory\Functions\*.ps1) {
+                . $file.FullName
+            }
+            $_queue = $using:threadSafeallgroups
+            $_descriptor = $using:descriptor
+            $_orgUrl = $using:orgUrl
+            $_Authheader = $using:Authheader
+            $group = $_
             $groupitem = [pscustomobject]@{
                 subjectKind   = $group.subjectKind
                 description   = $group.description
@@ -34,23 +46,24 @@ function Get-GroupInfo
                 url           = $group.url
                 descriptor    = $group.descriptor
             }
-            $membershipurl = "$($orgUrl)/_apis/graph/memberships/$($descriptor)/$($groupitem.descriptor)?api-version=7.1-preview.1"
+            $membershipurl = "$($_orgUrl)/_apis/graph/memberships/$($_descriptor)/$($groupitem.descriptor)?api-version=7.1-preview.1"
             try 
             {
-                $memberResult =  GET-AzureDevOpsRestAPI -RestAPIUrl $membershipurl -Authheader $Authheader
+                $memberResult = GET-AzureDevOpsRestAPI -RestAPIUrl $membershipurl -Authheader $_Authheader
                 if ($memberResult.statusCode -eq 200)
                 {
-                    $allGroups += $groupitem
+                    $_queue.Enqueue($groupitem)
                 }
             }
             catch 
             {
                 #if user is not a member of the group we will get a 404 error we will ignore this error and continue
             }
-        }
+        } -ThrottleLimit 25 #this seems the best balance for performance and not overhead.
     }
     While  ($null -ne $Result.responseHeaders."x-ms-continuationtoken")
-    #todo: use descriptor to look up group info. 
-    
+
+    $allGroups = @()
+    $allGroups = [array]$threadSafeallgroups
     return $allGroups
 }
