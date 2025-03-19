@@ -6,9 +6,6 @@ function Get-GroupInfo
         [string]$descriptor,
         [string]$ScriptDirectory
     )
-    $Authheader | Out-File "c:\temp\authheader.txt" 
-    $azureDevOpsOrganizationUrl | Out-File "c:\temp\authheader.txt" -Append
-    $descriptor | Out-File "c:\temp\authheader.txt" -Append
     $threadSafeallgroups = [System.Collections.Concurrent.ConcurrentQueue[pscustomobject]]::new()
     $orgUrl = $orgUrl.Replace("dev.azure.com", "vssps.dev.azure.com")
     $Result = $null

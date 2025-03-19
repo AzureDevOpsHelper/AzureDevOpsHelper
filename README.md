@@ -9,9 +9,11 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
  > - Auth to GraphAPI and gather user and tenant info from Entra (if applicable).  
 - Retrieve the projects in the Azure DevOps organization.
 - Retrieve the groups the current user is a member of (both Entra and Azure DevOps).
- > - __The api to pull "memberships" is not paginated so we can't reliably ask for all user memberships__
+ > - ___The api to pull "memberships" is not paginated so we can't reliably ask for all user memberships___
+ > - This starts immediately after Auth and runs until complete.
  > - Pull all Groups in the Org in pages of 500, use continuation token to repeat until done
  > - Check each user/container for membership (this also shows nested memberships!) 
+ > - This uses ForEach-Object -Parallel with -ThrottleLimit 25 making this significantly faster.
  - todo: Retrieve and display security namespaces and access control entries (ACEs) for the current user.
  - todo: Retrieve entitlement info 
 
