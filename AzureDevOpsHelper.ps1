@@ -55,21 +55,28 @@ else {
             $_UserResult = Get-GroupInfo -Authheader $_Authheader -orgUrl $_azureDevOpsOrganizationUrl -descriptor $_descriptor -ScriptDirectory $_ScriptDirectory
             $_UserResult
         }
-    )
-    $ps.AddArgument($Authheader)
-    $ps.AddArgument($azureDevOpsOrganizationUrl)
-    $ps.AddArgument($($User.results.descriptor))
-    $ps.AddArgument($ScriptDirectory)
+    ) | Out-Null
+    $ps.AddArgument($Authheader) | Out-Null
+    $ps.AddArgument($azureDevOpsOrganizationUrl) | Out-Null
+    $ps.AddArgument($($User.User.results.descriptor)) | Out-Null
+    $ps.AddArgument($ScriptDirectory) | Out-Null
     $job = $ps.BeginInvoke()
 
     Write-Host "User Info (from org)"
-    $User.results | Format-List -Property subjectKind,metaType,directoryAlias,domain,principalName,mailAddress,origin,originId,displayName,descriptor
+    $User.User.results | Format-List -Property subjectKind,metaType,directoryAlias,domain,principalName,mailAddress,origin,originId,displayName,descriptor
+    Write-Host
+    Write-Host "User Entitlement Info (from org)"
+    $User.Entitlements.results.accessLevel | Format-List 
+    Write-Host "LastAccessDate: " -NoNewline -ForegroundColor Green
+    Write-Host $User.Entitlements.results.lastAccessedDate.ToString()
+    Write-Host
+    Write-Host
     $graphtoken = Get-MSALTokenforGraphApi
     $graphtoken = $graphtoken[-1]
     $graphAuthheader = $graphtoken.CreateAuthorizationHeader()
     
     Write-Host "User Info (from Microsoft Graph)"
-    $Result =  Get-GraphInfo -Authheader $graphAuthheader -oid $User.results.originId -tid $User.results.domain
+    $Result =  Get-GraphInfo -Authheader $graphAuthheader -oid $User.User.results.originId -tid $User.User.results.domain
     $Result.user | Format-List -Property id,userPrincipalName,displayName,creationType,externalUserState
     Write-Host "Allowed user log ins:"
     $Result.user.identities | Format-List
@@ -77,13 +84,14 @@ else {
     Write-Host "Tenant Info (from Microsoft Graph)"
     $Result.tenant | Format-List -Property Id,displayName,onPremisesSyncEnabled 
 }
-Write-Host "since Authentication we have been Individually checking each Group for Membership, this may take a while and makes up to 25 simultaneous calls"
+Write-Host "Checking each Group for Membership, this started asynchronously right after" 
+Write-Host "authorization. This function makes up to 25 simultaneous calls for best performance."
 while ($job.IsCompleted -eq $false) {
         Start-Sleep -Seconds 1    
 }
 $UserGroups = $ps.EndInvoke($job)
 $runspace.Close()
-Write-Host "User Group Memberships: $($UserGroups.Count)"
+Write-Host "User has Membership in the following $($UserGroups.Count) groups:"
 $UserGroups | Format-Table -Property origin, principalName
 $stopwatch.Stop()
 Write-Host "Script execution time: $($stopwatch.Elapsed)"
