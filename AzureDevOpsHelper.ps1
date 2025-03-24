@@ -19,6 +19,7 @@ $token = Get-MSALToken
 $token = $token[-1] 
 $Authheader = $Token.CreateAuthorizationHeader()
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+#<#
 $projectsurl = $azureDevOpsOrganizationUrl + "/_apis/projects?stateFilter=All&api-version=2.2"
 $Result =  GET-AzureDevOpsRestAPI -RestAPIUrl $projectsurl -Authheader $Authheader
 $outputJson.Add("projects",$Result.results)
@@ -67,20 +68,27 @@ else {
     $job = $ps.BeginInvoke()
 
     Write-Host "User Info (from org)"
+    $outputJson.Add("devopsIdentity",$User.Identity.results)
+    $responseJson.Add("devopsIdentity",$User.Identity.responseHeaders)
+    $identitydescriptor = $User.Identity.results.value.descriptor
     $outputJson.Add("devopsUser",$User.User.results)
     $responseJson.Add("devopsUser",$User.User.responseHeaders)
     $User.User.results | Format-List -Property subjectKind,metaType,directoryAlias,domain,principalName,mailAddress,origin,originId,displayName,descriptor
     Write-Host
-    Write-Host "User Entitlement Info (from org)"
-    $outputJson.Add("devopsUserEntitlements",$User.Entitlements.results)
+    if ($null -ne $User.Entitlements.results) 
+    {
+        Write-Host "User Entitlement Info (from org)"
+        $outputJson.Add("devopsUserEntitlements",$User.Entitlements.results)
+        $responseJson.Add("devopsUserEntitlements",$User.Entitlements.responseHeaders)
+        $User.Entitlements.results.accessLevel | Format-List 
+        Write-Host "LastAccessDate: " -NoNewline -ForegroundColor Green
+        Write-Host $User.Entitlements.results.lastAccessedDate.ToString()
+        Write-Host "dateCreated: " -NoNewline -ForegroundColor Green
+        Write-Host $User.Entitlements.results.dateCreated.ToString()
+        Write-Host
+        Write-Host
+    }
     $responseJson.Add("devopsUserEntitlements",$User.Entitlements.responseHeaders)
-    $User.Entitlements.results.accessLevel | Format-List 
-    Write-Host "LastAccessDate: " -NoNewline -ForegroundColor Green
-    Write-Host $User.Entitlements.results.lastAccessedDate.ToString()
-    Write-Host "dateCreated: " -NoNewline -ForegroundColor Green
-    Write-Host $User.Entitlements.results.dateCreated.ToString()
-    Write-Host
-    Write-Host
     $graphtoken = Get-MSALTokenforGraphApi
     $graphtoken = $graphtoken[-1]
     $graphAuthheader = $graphtoken.CreateAuthorizationHeader()
@@ -106,8 +114,27 @@ while ($job.IsCompleted -eq $false) {
 $UserGroups = $ps.EndInvoke($job)
 $runspace.Close()
 $outputJson.Add("userGroups",$UserGroups)
-Write-Host "User has Membership in the following $($UserGroups.Count) groups:"
-$UserGroups | Format-Table -Property origin, principalName
+#Write-Host "User has Membership in the following $($UserGroups.Count) groups:"
+#$UserGroups | Format-Table -Property origin, principalName
+Write-Host "Found $($UserGroups.Count) group memberships, Please see output Files for details."
+
+$PermissionsResult =  Get-PermissionsInfo -Authheader $Authheader -orgUrl $azureDevOpsOrganizationUrl -descriptor $identitydescriptor -ScriptDirectory $ScriptDirectory
+$outputJson.Add("Permissions",$PermissionsResult)
+Write-Host "Found $($PermissionsResult.Count) Permissions, Please see output Files for details." 
+<#foreach ($permission in $PermissionsResult)
+{
+    Write-Host "NameSpace: " -NoNewline -ForegroundColor Green
+    if ($permission.namespaceName -ne "") {
+        $nsn = $permission.namespaceName }
+    elseif ($permission.namespacedisplayName -ne "") {
+        $nsn = $permission.namespacedisplayName }
+    else { $nsn = $permission.namespaceId } 
+    Write-Host $nsn
+    Write-Host "token: " -NoNewline -ForegroundColor Green
+    Write-Host $permission.token
+    $permission.enumactions | Format-Table
+}#>
+
 if (!(Test-Path -Path $outputpath)) {
     New-Item -Path $outputpath -Type Directory | Out-Null
 }
