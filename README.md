@@ -16,8 +16,8 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
   - Check each user/container to see if membership exists (this also shows nested memberships!) 
   - These checks use a ForEach-Object -Parallel with -ThrottleLimit 25 making this significantly faster.
 - Create output file with verbose details in configurable path.
-
-- todo: Retrieve and display security namespaces and access control entries (ACEs) for the current user [Add Permissions Information](https://github.com/AzureDevOpsHelper/AzureDevOpsHelper/issues/1). 
+- Retrieve and security namespaces and access control entries (ACEs) for the current user 
+  - todo: clearify permissions by translating tokens with project, team, repo, branch names etc.
 
 ## Prerequisites
 
@@ -33,6 +33,7 @@ AzureDevOpsUserHelper is a diagnostic and informational script that will focus o
 5. Follow the log in flow to get a Token for your Azure DevOps.
 6. Log in a second time, to authenticate to GraphAPI.
 7. The script will output information about your user from devops and Entra.
+8. Curated info is outputted to the console, Full info is saved to a Json file output.
 
 ## Contributing 
 

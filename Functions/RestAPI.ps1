@@ -41,7 +41,8 @@ function GET-AzureDevOpsRestAPI {
         "at line $($_.InvocationInfo.ScriptLineNumber) `r`n`r`n" + 
         "StatusCode: $statusCode`r`n" +
         "Headers: + $responseHeaders`r`n" +
-        "Body: $Response`r`n")
+        "Body: $Response`r`n" +
+        $_.Exception.Message)
     }
 <#    finally {
         #region Debug&Throttle
