@@ -146,6 +146,27 @@ function Get-PermissionsInfo
                                         $identityname = "[$($_User.Entitlements.results.accessLevel.licenseDisplayName)]\$($_User.Entitlements.results.user.principalName)"
                                         $friendlyToken = $friendlyToken.Replace($match.Value, $identityname)
                                     }
+                                    else 
+                                    {
+                                        if ($null -ne $enumactions."Record query execution information")
+                                        {
+                                            $projectguid = $tokenNullSafe.Substring(2,36)
+                                            $queryInfoUrl = $($_orgUrl)+ "/" + $($projectguid) + "/_apis/wit/queries/" + $($match.Value) + "?api-version=7.2-preview.2"
+                                            $queryInfo =  GET-AzureDevOpsRestAPI -RestAPIUrl $queryInfoUrl -Authheader $_Authheader
+                                            $queryName = $queryInfo.results.name
+
+                                            $friendlyToken = $friendlyToken.Replace($match.Value, $queryName)
+
+                                        }
+                                        #elseif ($null -ne $enumactions."Edit dashboard")
+                                        #{
+                                        #    $projectguid = $tokenNullSafe -split '/' | Select-Object -Index 1
+                                        #    $dashboardInfoUrl = "$($_orgUrl)/_apis/dashboard/dashboards/$($match.Value)?api-version=7.2-preview.1"
+                                        #    $dashboardInfo =  GET-AzureDevOpsRestAPI -RestAPIUrl $dashboardInfoUrl -Authheader $_Authheader
+                                        #    $friendlyToken = $friendlyToken.Replace($match.Value, $dashboardInfo.results.name)
+                                        #}
+                                        
+                                    }
                                 }
                             }
                         }
