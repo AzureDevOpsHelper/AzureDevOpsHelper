@@ -30,37 +30,56 @@ function Get-GroupInfo
             $_orgUrl = $using:orgUrl
             $_Authheader = $using:Authheader
             $group = $_
-            $groupitem = [pscustomobject]@{
-                subjectKind   = $group.subjectKind
-                description   = $group.description
-                domain        = $group.domain
-                principalName = $group.principalName -replace "\\","\"
-                mailAddress   = $group.mailAddress
-                origin        = $group.origin
-                originId      = $originId.domain
-                displayName   = $group.displayName
-                _links        = $group._links
-                url           = $group.url
-                descriptor    = $group.descriptor
-            }
-            $membershipurl = "$($_orgUrl)/_apis/graph/memberships/$($_descriptor)/$($groupitem.descriptor)?api-version=7.1-preview.1"
+            if ($group.origin -eq "aad") 
+            {
+                $storageKeyURL = $group._links.storageKey.href
+                $storageKey = GET-AzureDevOpsRestAPI -RestAPIUrl $storageKeyURL -Authheader $_Authheader            
+            }            
             try 
             {
+                $membershipurl = "$($_orgUrl)/_apis/graph/memberships/$($_descriptor)/$($group.descriptor)?api-version=7.1-preview.1"
                 $memberResult = GET-AzureDevOpsRestAPI -RestAPIUrl $membershipurl -Authheader $_Authheader
-                if ($memberResult.statusCode -eq 200)
-                {
-                    $_queue.Enqueue($groupitem)
+
+                $groupitem = [pscustomobject]@{
+                    storageKey    = ($group.origin -eq "aad") ? $storageKey.results.value : $group.originId
+                    descriptor    = $group.descriptor
+                    subjectKind   = $group.subjectKind
+                    description   = $group.description
+                    domain        = $group.domain
+                    principalName = $group.principalName -replace '\\','\'
+                    mailAddress   = $group.mailAddress
+                    origin        = $group.origin
+                    originId      = $group.originId
+                    displayName   = $group.displayName
+                    _links        = $group._links
+                    url           = $group.url
+                    amMember      = $true
                 }
             }
-            catch 
+            catch
             {
-                #if user is not a member of the group we will get a 404 error we will ignore this error and continue
+                $groupitem = [pscustomobject]@{
+                    storageKey    = ($group.origin -eq "aad") ? $storageKey.results.value : $group.originId
+                    descriptor    = $group.descriptor
+                    subjectKind   = $group.subjectKind
+                    description   = $group.description
+                    domain        = $group.domain
+                    principalName = $group.principalName -replace '\\','\'
+                    mailAddress   = $group.mailAddress
+                    origin        = $group.origin
+                    originId      = $group.originId
+                    displayName   = $group.displayName
+                    _links        = $group._links
+                    url           = $group.url
+                    amMember      = $false
+                }            
             }
+            $_queue.Enqueue($groupitem)                          
         } -ThrottleLimit 25 #this seems the best balance for performance and not overhead.
     }
     While  ($null -ne $Result.responseHeaders."x-ms-continuationtoken")
-
     $allGroups = @()
     $allGroups = [array]$threadSafeallgroups
+    $allGroups = $allGroups | Sort-Object -Property amMember, principalName
     return $allGroups
 }

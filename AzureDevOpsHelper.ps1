@@ -19,15 +19,14 @@ $token = Get-MSALToken
 $token = $token[-1] 
 $Authheader = $Token.CreateAuthorizationHeader()
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-#<#
 $projectsurl = $azureDevOpsOrganizationUrl + "/_apis/projects?stateFilter=All&api-version=2.2"
-$Result =  GET-AzureDevOpsRestAPI -RestAPIUrl $projectsurl -Authheader $Authheader
-$outputJson.Add("projects",$Result.results)
-$responseJson.Add("projects",$Result.responseHeaders)
+$projectResult =  GET-AzureDevOpsRestAPI -RestAPIUrl $projectsurl -Authheader $Authheader
+$outputJson.Add("projects",$projectResult.results)
+$responseJson.Add("projects",$projectResult.responseHeaders)
 $VSID = ""
-if ($null -ne $Result.responseHeaders."x-vss-userdata") 
+if ($null -ne $projectResult.responseHeaders."x-vss-userdata") 
 {
-    $VSID = $Result.responseHeaders."x-vss-userdata"
+    $VSID = $projectResult.responseHeaders."x-vss-userdata"
     $VSID = $VSID.Split(":")
     $headerinfo = @{
         VSID = $VSID[0]
@@ -78,8 +77,7 @@ else {
     if ($null -ne $User.Entitlements.results) 
     {
         Write-Host "User Entitlement Info (from org)"
-        $outputJson.Add("devopsUserEntitlements",$User.Entitlements.results)
-        $responseJson.Add("devopsUserEntitlements",$User.Entitlements.responseHeaders)
+        $outputJson.Add("devopsUserEntitlements",$User.Entitlements.results) 
         $User.Entitlements.results.accessLevel | Format-List 
         Write-Host "LastAccessDate: " -NoNewline -ForegroundColor Green
         Write-Host $User.Entitlements.results.lastAccessedDate.ToString()
@@ -116,9 +114,17 @@ $runspace.Close()
 $outputJson.Add("userGroups",$UserGroups)
 #Write-Host "User has Membership in the following $($UserGroups.Count) groups:"
 #$UserGroups | Format-Table -Property origin, principalName
-Write-Host "Found $($UserGroups.Count) group memberships, Please see output Files for details."
+Write-Host "Found $($UserGroups.Count) groups, Please see output Files for details."
 
-$PermissionsResult =  Get-PermissionsInfo -Authheader $Authheader -orgUrl $azureDevOpsOrganizationUrl -descriptor $identitydescriptor -ScriptDirectory $ScriptDirectory
+$PermissionsResult =  Get-PermissionsInfo `
+                        -Authheader $Authheader `
+                        -orgUrl $azureDevOpsOrganizationUrl `
+                        -descriptor $identitydescriptor `
+                        -ScriptDirectory $ScriptDirectory `
+                        -Projects $projectResult.results.value `
+                        -Domain $graphResult, `
+                        -UserGroups $UserGroups, `
+                        -User $User
 $outputJson.Add("Permissions",$PermissionsResult)
 Write-Host "Found $($PermissionsResult.Count) Permissions, Please see output Files for details." 
 <#foreach ($permission in $PermissionsResult)
